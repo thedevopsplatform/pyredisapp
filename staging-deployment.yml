@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: canary
+  labels:
+    name: canary-service
+    app: pyredisapp
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    name: pyapp-canary-pod
+    app: pyredisapp
+    track: canary
+  type: LoadBalancer 
+   
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pyapp-canary-deployment
+  labels:
+    app: pyredisapp
+spec:
+  replicas: $CANARY_REPLICAS
+  selector:
+    matchLabels:
+      name: pyapp-canary-pod
+      track: canary
+  template:
+    metadata:
+      name: pyapp-canary-pod
+      labels:
+        name: pyapp-canary-pod
+        app: pyredisapp
+        track: canary
+    spec:
+      containers:
+      - name: pyapp-canary-container
+        image: $DOCKER_IMAGE_NAME:$BUILD_NUMBER
+        ports:
+        - containerPort: 80    
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  labels:
+    name: redis-service
+    app: pyredisapp
+spec:
+  ports:
+  - port: 6379
+    targetPort: 6379
+  selector:
+    name: redis-pod
+    app: pyredisapp
+---    
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-deployment
+  labels:
+    app: pyredisapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: redis-pod
+      app: pyredisapp
+  template:
+    metadata:
+      name: redis-pod
+      labels:
+        name: redis-pod
+        app: pyredisapp
+    spec:
+      containers:
+      - name: redis
+        image: redis
+        ports:
+        - containerPort: 6379    

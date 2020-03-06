@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: fanout-ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+  - host: example.com
+    http:
+      paths:
+        - path: /dev
+          backend:
+            serviceName: canary
+            servicePort: 8080   
+        - path: /
+          backend:
+            serviceName: stable
+            servicePort: 80              
